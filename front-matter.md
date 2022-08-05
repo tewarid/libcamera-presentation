@@ -2,5 +2,5 @@
 title: libcamera
 author:
 - Devendra Tewari
-date: August 4, 2022
+date: August 5, 2022
 ---

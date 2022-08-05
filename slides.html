@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="generator" content="pandoc">
   <meta name="author" content="Devendra Tewari">
-  <meta name="dcterms.date" content="2022-08-04">
+  <meta name="dcterms.date" content="2022-08-05">
   <title>libcamera</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -95,7 +95,7 @@
 <section id="title-slide">
   <h1 class="title">libcamera</h1>
   <p class="author">Devendra Tewari</p>
-  <p class="date">August 4, 2022</p>
+  <p class="date">August 5, 2022</p>
 </section>
 
 <section>
@@ -243,15 +243,17 @@ libcamera-vid -t 10000 --codec mjpeg -o test.mjpeg</code></pre>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="va">allocator_</span><span class="op">-&gt;</span>allocate<span class="op">(</span>stream<span class="op">);</span></span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="at">const</span> <span class="bu">std::</span>vector<span class="op">&lt;</span><span class="bu">std::</span>unique_ptr<span class="op">&lt;</span>FrameBuffer<span class="op">&gt;&gt;</span> <span class="op">&amp;</span>buffers <span class="op">=</span></span>
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="va">allocator_</span><span class="op">-&gt;</span>buffers<span class="op">(</span>stream<span class="op">);</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="va">camera_</span><span class="op">-&gt;</span>start<span class="op">(&amp;</span><span class="va">controls_</span><span class="op">);</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="va">controls_</span><span class="op">.</span>clear<span class="op">();</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="va">camera_</span><span class="op">-&gt;</span>requestCompleted<span class="op">.</span><span class="fu">connect</span><span class="op">(</span>requestComplete<span class="op">);</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="dt">unsigned</span> <span class="dt">int</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> buffers<span class="op">.</span>size<span class="op">();</span> <span class="op">++</span>i<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>unique_ptr<span class="op">&lt;</span>Request<span class="op">&gt;</span> request <span class="op">=</span> <span class="va">camera_</span><span class="op">-&gt;</span>createRequest<span class="op">();</span></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    request<span class="op">-&gt;</span>addBuffer<span class="op">(</span>stream<span class="op">,</span> buffers<span class="op">[</span>i<span class="op">].</span>get<span class="op">());</span></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="va">camera_</span><span class="op">-&gt;</span>queueRequest<span class="op">(</span>request<span class="op">.</span>get<span class="op">());</span></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    <span class="va">requests_</span><span class="op">.</span>push_back<span class="op">(</span><span class="bu">std::</span>move<span class="op">(</span>request<span class="op">));</span></span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="va">controls_</span><span class="op">.</span>set<span class="op">(</span>controls<span class="op">::</span>ExposureTime<span class="op">,</span> <span class="dv">15000</span><span class="op">);</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="va">controls_</span><span class="op">.</span>set<span class="op">(</span>controls<span class="op">::</span>AnalogueGain<span class="op">,</span> <span class="dv">2</span><span class="op">);</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="va">camera_</span><span class="op">-&gt;</span>start<span class="op">(&amp;</span><span class="va">controls_</span><span class="op">);</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="va">controls_</span><span class="op">.</span>clear<span class="op">();</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="va">camera_</span><span class="op">-&gt;</span>requestCompleted<span class="op">.</span><span class="fu">connect</span><span class="op">(</span>requestComplete<span class="op">);</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="dt">unsigned</span> <span class="dt">int</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> buffers<span class="op">.</span>size<span class="op">();</span> <span class="op">++</span>i<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>unique_ptr<span class="op">&lt;</span>Request<span class="op">&gt;</span> request <span class="op">=</span> <span class="va">camera_</span><span class="op">-&gt;</span>createRequest<span class="op">();</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    request<span class="op">-&gt;</span>addBuffer<span class="op">(</span>stream<span class="op">,</span> buffers<span class="op">[</span>i<span class="op">].</span>get<span class="op">());</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    <span class="va">camera_</span><span class="op">-&gt;</span>queueRequest<span class="op">(</span>request<span class="op">.</span>get<span class="op">());</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    <span class="va">requests_</span><span class="op">.</span>push_back<span class="op">(</span><span class="bu">std::</span>move<span class="op">(</span>request<span class="op">));</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 </section>
 <section class="slide level2">
 

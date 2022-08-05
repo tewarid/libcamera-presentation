@@ -135,6 +135,8 @@ allocator_ = new FrameBufferAllocator(camera_);
 allocator_->allocate(stream);
 const std::vector<std::unique_ptr<FrameBuffer>> &buffers =
     allocator_->buffers(stream);
+controls_.set(controls::ExposureTime, 15000);
+controls_.set(controls::AnalogueGain, 2);
 camera_->start(&controls_);
 controls_.clear();
 camera_->requestCompleted.connect(requestComplete);
