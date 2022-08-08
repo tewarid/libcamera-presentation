@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="generator" content="pandoc">
   <meta name="author" content="Devendra Tewari">
-  <meta name="dcterms.date" content="2022-08-05">
+  <meta name="dcterms.date" content="2022-08-08">
   <title>libcamera</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -95,7 +95,7 @@
 <section id="title-slide">
   <h1 class="title">libcamera</h1>
   <p class="author">Devendra Tewari</p>
-  <p class="date">August 5, 2022</p>
+  <p class="date">August 8, 2022</p>
 </section>
 
 <section>
@@ -140,8 +140,21 @@
 <ul>
 <li>App communicates with camera using device files such as <code>/dev/video0</code> typically <a href="https://linuxtv.org/downloads/v4l-dvb-apis/userspace-api/v4l/v4l2grab.c.html">using libv4l</a></li>
 <li>Obtains image and video through camera driver such as <code>bcm2835_v4l2</code> that depends on camera sensor I2C driver, <code>videodev</code>, and other V4L kernel modules</li>
-<li><code>v4l-utils</code> package provides commands such as <code>v4l2-ctl</code></li>
+<li><code>v4l-utils</code> package provides commands such as <code>v4l2-ctl</code> and <code>v4l2-dbg</code></li>
 </ul>
+</section>
+<section id="v4l2-ctl" class="slide level2">
+<h2><code>v4l2-ctl</code></h2>
+<pre class="log"><code>v4l2-ctl --list-devices
+
+v4l2-ctl --info --device /dev/video0
+
+v4l2-ctl --list-formats --device /dev/video0
+
+v4l2-ctl --set-fmt-video=width=640,height=480,pixelformat=&#39;Y10 &#39;
+
+v4l2-ctl --stream-mmap --stream-count=1 --stream-to=output.raw --device /dev/video0</code></pre>
+<p>Raw Y’UV images can be viewed with an app such as <a href="https://github.com/IENT/YUView">yuview</a></p>
 </section>
 <section id="libcamera-architecture" class="slide level2">
 <h2><code>libcamera</code> architecture</h2>
@@ -214,65 +227,65 @@ libcamera-vid -t 10000 --codec mjpeg -o test.mjpeg</code></pre>
 
 <h3 id="open-camera">Open camera</h3>
 <p>Create instance of <code>libcamera::CameraManager</code> to acquire an instance of <code>libcamera::Camera</code></p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="va">camera_manager_</span> <span class="op">=</span> <span class="bu">std::</span>make_unique<span class="op">&lt;</span>CameraManager<span class="op">&gt;();</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="va">camera_manager_</span><span class="op">-&gt;</span>start<span class="op">();</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>string<span class="op"> </span><span class="at">const</span> <span class="op">&amp;</span>cam_id <span class="op">=</span> <span class="va">camera_manager_</span><span class="op">-&gt;</span>cameras<span class="op">()[</span><span class="dv">0</span><span class="op">]-&gt;</span>id<span class="op">();</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="va">camera_</span> <span class="op">=</span> <span class="va">camera_manager_</span><span class="op">-&gt;</span>get<span class="op">(</span>cam_id<span class="op">);</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="va">camera_</span><span class="op">-&gt;</span>acquire<span class="op">();</span></span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="va">camera_manager_</span> <span class="op">=</span> <span class="bu">std::</span>make_unique<span class="op">&lt;</span>CameraManager<span class="op">&gt;();</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="va">camera_manager_</span><span class="op">-&gt;</span>start<span class="op">();</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>string<span class="op"> </span><span class="at">const</span> <span class="op">&amp;</span>cam_id <span class="op">=</span> <span class="va">camera_manager_</span><span class="op">-&gt;</span>cameras<span class="op">()[</span><span class="dv">0</span><span class="op">]-&gt;</span>id<span class="op">();</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="va">camera_</span> <span class="op">=</span> <span class="va">camera_manager_</span><span class="op">-&gt;</span>get<span class="op">(</span>cam_id<span class="op">);</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="va">camera_</span><span class="op">-&gt;</span>acquire<span class="op">();</span></span></code></pre></div>
 </section>
 <section class="slide level2">
 
 <h3 id="configure-streams">Configure streams</h3>
-<div class="sourceCode" id="cb3"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>StreamRoles stream_roles <span class="op">=</span> <span class="op">{</span> StreamRole<span class="op">::</span>VideoRecording <span class="op">};</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">// { StreamRole::StillCapture, StreamRole::Raw };</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co">// { StreamRole::Viewfinder };</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="va">configuration_</span> <span class="op">=</span> <span class="va">camera_</span><span class="op">-&gt;</span>generateConfiguration<span class="op">(</span>stream_roles<span class="op">);</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="va">configuration_</span><span class="op">-&gt;</span>at<span class="op">(</span><span class="dv">0</span><span class="op">).</span>pixelFormat <span class="op">=</span> libcamera<span class="op">::</span>formats<span class="op">::</span>YUV420<span class="op">;</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="va">configuration_</span><span class="op">-&gt;</span>at<span class="op">(</span><span class="dv">0</span><span class="op">).</span>bufferCount <span class="op">=</span> <span class="dv">2</span><span class="op">;</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="va">configuration_</span><span class="op">-&gt;</span>at<span class="op">(</span><span class="dv">0</span><span class="op">).</span>size<span class="op">.</span>width <span class="op">=</span> <span class="dv">640</span><span class="op">;</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="va">configuration_</span><span class="op">-&gt;</span>at<span class="op">(</span><span class="dv">0</span><span class="op">).</span>size<span class="op">.</span>height <span class="op">=</span> <span class="dv">480</span><span class="op">;</span></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="va">configuration_</span><span class="op">-&gt;</span>validate<span class="op">();</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="va">camera_</span><span class="op">-&gt;</span>configure<span class="op">(</span><span class="va">configuration_</span><span class="op">.</span>get<span class="op">());</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>StreamRoles stream_roles <span class="op">=</span> <span class="op">{</span> StreamRole<span class="op">::</span>VideoRecording <span class="op">};</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co">// { StreamRole::StillCapture, StreamRole::Raw };</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co">// { StreamRole::Viewfinder };</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="va">configuration_</span> <span class="op">=</span> <span class="va">camera_</span><span class="op">-&gt;</span>generateConfiguration<span class="op">(</span>stream_roles<span class="op">);</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="va">configuration_</span><span class="op">-&gt;</span>at<span class="op">(</span><span class="dv">0</span><span class="op">).</span>pixelFormat <span class="op">=</span> libcamera<span class="op">::</span>formats<span class="op">::</span>YUV420<span class="op">;</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="va">configuration_</span><span class="op">-&gt;</span>at<span class="op">(</span><span class="dv">0</span><span class="op">).</span>bufferCount <span class="op">=</span> <span class="dv">2</span><span class="op">;</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="va">configuration_</span><span class="op">-&gt;</span>at<span class="op">(</span><span class="dv">0</span><span class="op">).</span>size<span class="op">.</span>width <span class="op">=</span> <span class="dv">640</span><span class="op">;</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="va">configuration_</span><span class="op">-&gt;</span>at<span class="op">(</span><span class="dv">0</span><span class="op">).</span>size<span class="op">.</span>height <span class="op">=</span> <span class="dv">480</span><span class="op">;</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="va">configuration_</span><span class="op">-&gt;</span>validate<span class="op">();</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="va">camera_</span><span class="op">-&gt;</span>configure<span class="op">(</span><span class="va">configuration_</span><span class="op">.</span>get<span class="op">());</span></span></code></pre></div>
 </section>
 <section class="slide level2">
 
 <h3 id="start-camera">Start camera</h3>
 <p>For each frame an application wants to capture it must queue a request for it to the camera</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>Stream <span class="op">*</span>stream <span class="op">=</span> <span class="va">configuration_</span><span class="op">-&gt;</span>at<span class="op">(</span><span class="dv">0</span><span class="op">).</span>stream<span class="op">();</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="va">allocator_</span> <span class="op">=</span> <span class="kw">new</span> FrameBufferAllocator<span class="op">(</span><span class="va">camera_</span><span class="op">);</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="va">allocator_</span><span class="op">-&gt;</span>allocate<span class="op">(</span>stream<span class="op">);</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="at">const</span> <span class="bu">std::</span>vector<span class="op">&lt;</span><span class="bu">std::</span>unique_ptr<span class="op">&lt;</span>FrameBuffer<span class="op">&gt;&gt;</span> <span class="op">&amp;</span>buffers <span class="op">=</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="va">allocator_</span><span class="op">-&gt;</span>buffers<span class="op">(</span>stream<span class="op">);</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="va">controls_</span><span class="op">.</span>set<span class="op">(</span>controls<span class="op">::</span>ExposureTime<span class="op">,</span> <span class="dv">15000</span><span class="op">);</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="va">controls_</span><span class="op">.</span>set<span class="op">(</span>controls<span class="op">::</span>AnalogueGain<span class="op">,</span> <span class="dv">2</span><span class="op">);</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="va">camera_</span><span class="op">-&gt;</span>start<span class="op">(&amp;</span><span class="va">controls_</span><span class="op">);</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="va">controls_</span><span class="op">.</span>clear<span class="op">();</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="va">camera_</span><span class="op">-&gt;</span>requestCompleted<span class="op">.</span><span class="fu">connect</span><span class="op">(</span>requestComplete<span class="op">);</span></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="dt">unsigned</span> <span class="dt">int</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> buffers<span class="op">.</span>size<span class="op">();</span> <span class="op">++</span>i<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>unique_ptr<span class="op">&lt;</span>Request<span class="op">&gt;</span> request <span class="op">=</span> <span class="va">camera_</span><span class="op">-&gt;</span>createRequest<span class="op">();</span></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    request<span class="op">-&gt;</span>addBuffer<span class="op">(</span>stream<span class="op">,</span> buffers<span class="op">[</span>i<span class="op">].</span>get<span class="op">());</span></span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    <span class="va">camera_</span><span class="op">-&gt;</span>queueRequest<span class="op">(</span>request<span class="op">.</span>get<span class="op">());</span></span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    <span class="va">requests_</span><span class="op">.</span>push_back<span class="op">(</span><span class="bu">std::</span>move<span class="op">(</span>request<span class="op">));</span></span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>Stream <span class="op">*</span>stream <span class="op">=</span> <span class="va">configuration_</span><span class="op">-&gt;</span>at<span class="op">(</span><span class="dv">0</span><span class="op">).</span>stream<span class="op">();</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="va">allocator_</span> <span class="op">=</span> <span class="kw">new</span> FrameBufferAllocator<span class="op">(</span><span class="va">camera_</span><span class="op">);</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="va">allocator_</span><span class="op">-&gt;</span>allocate<span class="op">(</span>stream<span class="op">);</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="at">const</span> <span class="bu">std::</span>vector<span class="op">&lt;</span><span class="bu">std::</span>unique_ptr<span class="op">&lt;</span>FrameBuffer<span class="op">&gt;&gt;</span> <span class="op">&amp;</span>buffers <span class="op">=</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="va">allocator_</span><span class="op">-&gt;</span>buffers<span class="op">(</span>stream<span class="op">);</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="va">controls_</span><span class="op">.</span>set<span class="op">(</span>controls<span class="op">::</span>ExposureTime<span class="op">,</span> <span class="dv">15000</span><span class="op">);</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="va">controls_</span><span class="op">.</span>set<span class="op">(</span>controls<span class="op">::</span>AnalogueGain<span class="op">,</span> <span class="dv">2</span><span class="op">);</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="va">camera_</span><span class="op">-&gt;</span>start<span class="op">(&amp;</span><span class="va">controls_</span><span class="op">);</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="va">controls_</span><span class="op">.</span>clear<span class="op">();</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="va">camera_</span><span class="op">-&gt;</span>requestCompleted<span class="op">.</span><span class="fu">connect</span><span class="op">(</span>requestComplete<span class="op">);</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="dt">unsigned</span> <span class="dt">int</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> buffers<span class="op">.</span>size<span class="op">();</span> <span class="op">++</span>i<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>unique_ptr<span class="op">&lt;</span>Request<span class="op">&gt;</span> request <span class="op">=</span> <span class="va">camera_</span><span class="op">-&gt;</span>createRequest<span class="op">();</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    request<span class="op">-&gt;</span>addBuffer<span class="op">(</span>stream<span class="op">,</span> buffers<span class="op">[</span>i<span class="op">].</span>get<span class="op">());</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    <span class="va">camera_</span><span class="op">-&gt;</span>queueRequest<span class="op">(</span>request<span class="op">.</span>get<span class="op">());</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    <span class="va">requests_</span><span class="op">.</span>push_back<span class="op">(</span><span class="bu">std::</span>move<span class="op">(</span>request<span class="op">));</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 </section>
 <section class="slide level2">
 
 <h3 id="requestcomplete"><code>requestComplete</code></h3>
-<div class="sourceCode" id="cb5"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>request<span class="op">-&gt;</span>status<span class="op">()</span> <span class="op">==</span> Request<span class="op">::</span>RequestCancelled<span class="op">)</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span><span class="op">;</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="at">const</span> libcamera<span class="op">::</span>Request<span class="op">::</span>BufferMap <span class="op">&amp;</span>buffers <span class="op">=</span> request<span class="op">-&gt;</span>buffers<span class="op">();</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="kw">auto</span> bufferPair <span class="op">:</span> buffers<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    FrameBuffer <span class="op">*</span>buffer <span class="op">=</span> bufferPair<span class="op">.</span>second<span class="op">;</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> FrameMetadata <span class="op">&amp;</span>metadata <span class="op">=</span> buffer<span class="op">-&gt;</span>metadata<span class="op">();</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>cout<span class="op"> &lt;&lt;</span> <span class="st">&quot; seq: &quot;</span> <span class="op">&lt;&lt;</span> <span class="bu">std::</span>setw<span class="op">(</span><span class="dv">6</span><span class="op">)</span> <span class="op">&lt;&lt;</span> <span class="bu">std::</span>setfill<span class="op">(</span><span class="ch">&#39;0&#39;</span><span class="op">)</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>              <span class="op">&lt;&lt;</span> metadata<span class="op">.</span>sequence <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Queue next request with same buffer</span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>unique_ptr<span class="op">&lt;</span>Request<span class="op">&gt;</span> requestToQueue <span class="op">=</span> <span class="va">camera_</span><span class="op">-&gt;</span>createRequest<span class="op">();</span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Stream <span class="op">*</span>stream <span class="op">=</span> bufferPair<span class="op">.</span>first<span class="op">;</span></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    requestToQueue<span class="op">-&gt;</span>addBuffer<span class="op">(</span>stream<span class="op">,</span> buffer<span class="op">);</span></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    <span class="va">camera_</span><span class="op">-&gt;</span>queueRequest<span class="op">(</span>requestToQueue<span class="op">.</span>get<span class="op">());</span></span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    <span class="va">requests_</span><span class="op">.</span>push_back<span class="op">(</span><span class="bu">std::</span>move<span class="op">(</span>requestToQueue<span class="op">));</span></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>request<span class="op">-&gt;</span>status<span class="op">()</span> <span class="op">==</span> Request<span class="op">::</span>RequestCancelled<span class="op">)</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span><span class="op">;</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="at">const</span> libcamera<span class="op">::</span>Request<span class="op">::</span>BufferMap <span class="op">&amp;</span>buffers <span class="op">=</span> request<span class="op">-&gt;</span>buffers<span class="op">();</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="kw">auto</span> bufferPair <span class="op">:</span> buffers<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    FrameBuffer <span class="op">*</span>buffer <span class="op">=</span> bufferPair<span class="op">.</span>second<span class="op">;</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> FrameMetadata <span class="op">&amp;</span>metadata <span class="op">=</span> buffer<span class="op">-&gt;</span>metadata<span class="op">();</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>cout<span class="op"> &lt;&lt;</span> <span class="st">&quot; seq: &quot;</span> <span class="op">&lt;&lt;</span> <span class="bu">std::</span>setw<span class="op">(</span><span class="dv">6</span><span class="op">)</span> <span class="op">&lt;&lt;</span> <span class="bu">std::</span>setfill<span class="op">(</span><span class="ch">&#39;0&#39;</span><span class="op">)</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>              <span class="op">&lt;&lt;</span> metadata<span class="op">.</span>sequence <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Queue next request with same buffer</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>unique_ptr<span class="op">&lt;</span>Request<span class="op">&gt;</span> requestToQueue <span class="op">=</span> <span class="va">camera_</span><span class="op">-&gt;</span>createRequest<span class="op">();</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Stream <span class="op">*</span>stream <span class="op">=</span> bufferPair<span class="op">.</span>first<span class="op">;</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    requestToQueue<span class="op">-&gt;</span>addBuffer<span class="op">(</span>stream<span class="op">,</span> buffer<span class="op">);</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    <span class="va">camera_</span><span class="op">-&gt;</span>queueRequest<span class="op">(</span>requestToQueue<span class="op">.</span>get<span class="op">());</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    <span class="va">requests_</span><span class="op">.</span>push_back<span class="op">(</span><span class="bu">std::</span>move<span class="op">(</span>requestToQueue<span class="op">));</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 </section>
 <section class="slide level2">
 
@@ -287,9 +300,9 @@ libcamera-vid -t 10000 --codec mjpeg -o test.mjpeg</code></pre>
 <section class="slide level2">
 
 <h3 id="stop-camera">Stop camera</h3>
-<div class="sourceCode" id="cb6"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="va">camera_</span><span class="op">-&gt;</span>stop<span class="op">();</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="va">camera_</span><span class="op">-&gt;</span>requestCompleted<span class="op">.</span><span class="fu">disconnect</span><span class="op">(</span>requestComplete<span class="op">);</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="va">requests_</span><span class="op">.</span>clear<span class="op">();</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="va">camera_</span><span class="op">-&gt;</span>stop<span class="op">();</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="va">camera_</span><span class="op">-&gt;</span>requestCompleted<span class="op">.</span><span class="fu">disconnect</span><span class="op">(</span>requestComplete<span class="op">);</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="va">requests_</span><span class="op">.</span>clear<span class="op">();</span></span></code></pre></div>
 </section>
 <section class="slide level2">
 
@@ -298,19 +311,19 @@ libcamera-vid -t 10000 --codec mjpeg -o test.mjpeg</code></pre>
 <li>Configure streams, start and stop camera can repeat multiple times</li>
 <li>The application is now finished with the camera and the resources the camera uses</li>
 </ul>
-<div class="sourceCode" id="cb7"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>  Stream <span class="op">*</span>stream <span class="op">=</span> <span class="va">configuration_</span><span class="op">-&gt;</span>at<span class="op">(</span><span class="dv">0</span><span class="op">).</span>stream<span class="op">();</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="va">allocator_</span><span class="op">-&gt;</span>free<span class="op">(</span>stream<span class="op">);</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">delete</span> <span class="va">allocator_</span><span class="op">;</span></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="va">configuration_</span><span class="op">.</span>reset<span class="op">();</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="va">camera_</span><span class="op">-&gt;</span>release<span class="op">();</span></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="va">camera_manager_</span><span class="op">-&gt;</span>stop<span class="op">();</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>  Stream <span class="op">*</span>stream <span class="op">=</span> <span class="va">configuration_</span><span class="op">-&gt;</span>at<span class="op">(</span><span class="dv">0</span><span class="op">).</span>stream<span class="op">();</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="va">allocator_</span><span class="op">-&gt;</span>free<span class="op">(</span>stream<span class="op">);</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">delete</span> <span class="va">allocator_</span><span class="op">;</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="va">configuration_</span><span class="op">.</span>reset<span class="op">();</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="va">camera_</span><span class="op">-&gt;</span>release<span class="op">();</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="va">camera_manager_</span><span class="op">-&gt;</span>stop<span class="op">();</span></span></code></pre></div>
 </section>
 <section class="slide level2">
 
 <h3 id="build-and-run-example">Build and run example</h3>
 <pre class="log"><code>$ c++ example.cpp -o example `pkg-config --cflags --libs libcamera` -std=c++17
 
-$ ./example
+$ LIBCAMERA_LOG_LEVELS=*:DEBUG ./example
 [4:00:09.926918692] [3203]  INFO Camera camera_manager.cpp:293 libcamera v0.0.0+3545-22656360-dirty (2022-05-12T10:01:53-03:00)
 [4:00:10.107994296] [3204]  WARN RPI raspberrypi.cpp:1241 Mismatch between Unicam and CamHelper for embedded data usage!
 [4:00:10.110650760] [3204]  INFO RPI raspberrypi.cpp:1356 Registered camera /base/soc/i2c0mux/i2c@1/imx219@10 to Unicam device /dev/media0 and ISP device /dev/media3

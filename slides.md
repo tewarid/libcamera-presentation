@@ -32,7 +32,23 @@ sensors
 
 - App communicates with camera using device files such as `/dev/video0` typically [using libv4l](https://linuxtv.org/downloads/v4l-dvb-apis/userspace-api/v4l/v4l2grab.c.html)
 - Obtains image and video through camera driver such as `bcm2835_v4l2` that depends on camera sensor I2C driver, `videodev`, and other V4L kernel modules
-- `v4l-utils` package provides commands such as `v4l2-ctl`
+- `v4l-utils` package provides commands such as `v4l2-ctl` and `v4l2-dbg`
+
+## `v4l2-ctl`
+
+```log
+v4l2-ctl --list-devices
+
+v4l2-ctl --info --device /dev/video0
+
+v4l2-ctl --list-formats --device /dev/video0
+
+v4l2-ctl --set-fmt-video=width=640,height=480,pixelformat='Y10 '
+
+v4l2-ctl --stream-mmap --stream-count=1 --stream-to=output.raw --device /dev/video0
+```
+
+Raw Y'UV images can be viewed with an app such as [yuview](https://github.com/IENT/YUView)
 
 ## `libcamera` architecture
 
@@ -214,7 +230,7 @@ uses
 ```log
 $ c++ example.cpp -o example `pkg-config --cflags --libs libcamera` -std=c++17
 
-$ ./example
+$ LIBCAMERA_LOG_LEVELS=*:DEBUG ./example
 [4:00:09.926918692] [3203]  INFO Camera camera_manager.cpp:293 libcamera v0.0.0+3545-22656360-dirty (2022-05-12T10:01:53-03:00)
 [4:00:10.107994296] [3204]  WARN RPI raspberrypi.cpp:1241 Mismatch between Unicam and CamHelper for embedded data usage!
 [4:00:10.110650760] [3204]  INFO RPI raspberrypi.cpp:1356 Registered camera /base/soc/i2c0mux/i2c@1/imx219@10 to Unicam device /dev/media0 and ISP device /dev/media3
