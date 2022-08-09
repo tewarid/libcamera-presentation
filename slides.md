@@ -172,19 +172,39 @@ for (unsigned int i = 0; i < buffers.size(); ++i) {
 if (request->status() == Request::RequestCancelled)
     return;
 const libcamera::Request::BufferMap &buffers = request->buffers();
+Save(buffers);
+std::unique_ptr<Request> requestToQueue = camera_->createRequest();
+for (auto bufferPair : buffers) {
+    FrameBuffer *buffer = bufferPair.second;
+    const Stream *stream = bufferPair.first;
+    requestToQueue->addBuffer(stream, buffer);
+}
+camera_->queueRequest(requestToQueue.get());
+requests_.push_back(std::move(requestToQueue));
+```
+
+---
+
+### Save YUV420 when no padding in data
+
+```c++
+assert(configuration_->at(0).size.width == configuration_->at(0).stride);
+unsigned int length = 0;
 for (auto bufferPair : buffers) {
     FrameBuffer *buffer = bufferPair.second;
     const FrameMetadata &metadata = buffer->metadata();
-    std::cout << " seq: " << std::setw(6) << std::setfill('0')
-              << metadata.sequence << std::endl;
-    // Queue next request with same buffer
-    std::unique_ptr<Request> requestToQueue = camera_->createRequest();
-    const Stream *stream = bufferPair.first;
-    requestToQueue->addBuffer(stream, buffer);
-    camera_->queueRequest(requestToQueue.get());
-    requests_.push_back(std::move(requestToQueue));
+    std::cout << " seq: " << std::setw(6) << std::setfill('0') << metadata.sequence << std::endl;
+    for (unsigned i = 0; i < buffer->planes().size(); i++)
+    {
+        length += buffer->planes()[i].length;
+    }
+    const std::string& filename = GetTimestamp() + ".yuv";
+    std::ofstream out(filename, std::ios::out | std::ios::binary);
+    void *memory = mmap(NULL, length, PROT_READ | PROT_WRITE, MAP_SHARED, buffer->planes()[0].fd.get(), 0);
+    out.write((char *)memory, length);
+    munmap(memory, length);
+    out.close();
 }
-
 ```
 
 ---
@@ -192,7 +212,7 @@ for (auto bufferPair : buffers) {
 ### Encoding image and video
 
 - libcamera provides raw image frames from the sensor that are processed using image processing and control algorithms based on per sensor tuning file
-- libcamera does not provide any means to encode or display images or videos
+- libcamera does not provide additional means to encode or display images or videos
 - `libcamera-still` uses external libraries to encode images such as libjpeg for jpeg
 - `libcamera-vid` uses hardware H.264 encoder on Raspberry Pi through `/dev/video11`, apps may use external libraries such as ffmpeg/libav codec for H.264
 
@@ -227,20 +247,26 @@ uses
 
 ### Build and run example
 
-```log
-$ c++ example.cpp -o example `pkg-config --cflags --libs libcamera` -std=c++17
+Invoke compiler directly
 
+```log
+c++ example.cpp -o example `pkg-config --cflags --libs libcamera` -std=c++17
+```
+
+Use meson
+
+```bash
+meson build
+cd build
+ninja
+```
+
+```log
 $ LIBCAMERA_LOG_LEVELS=*:DEBUG ./example
-[4:00:09.926918692] [3203]  INFO Camera camera_manager.cpp:293 libcamera v0.0.0+3545-22656360-dirty (2022-05-12T10:01:53-03:00)
-[4:00:10.107994296] [3204]  WARN RPI raspberrypi.cpp:1241 Mismatch between Unicam and CamHelper for embedded data usage!
-[4:00:10.110650760] [3204]  INFO RPI raspberrypi.cpp:1356 Registered camera /base/soc/i2c0mux/i2c@1/imx219@10 to Unicam device /dev/media0 and ISP device /dev/media3
-[4:00:10.113007188] [3203]  INFO Camera camera.cpp:1029 configuring streams: (0) 640x480-YUV420
-[4:00:10.114227143] [3204]  INFO RPI raspberrypi.cpp:760 Sensor: /base/soc/i2c0mux/i2c@1/imx219@10 - Selected sensor format: 640x480-SBGGR10_1X10 - Selected unicam format: 640x480-pBAA
 Press enter to exit...
- seq: 000007
- seq: 000008
- seq: 000009
- seq: 000010
+ seq: 000004
+ seq: 000005
+ seq: 000006
 ```
 
 ## Explore further

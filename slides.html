@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="generator" content="pandoc">
   <meta name="author" content="Devendra Tewari">
-  <meta name="dcterms.date" content="2022-08-08">
+  <meta name="dcterms.date" content="2022-08-09">
   <title>libcamera</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -95,7 +95,7 @@
 <section id="title-slide">
   <h1 class="title">libcamera</h1>
   <p class="author">Devendra Tewari</p>
-  <p class="date">August 8, 2022</p>
+  <p class="date">August 9, 2022</p>
 </section>
 
 <section>
@@ -274,25 +274,43 @@ libcamera-vid -t 10000 --codec mjpeg -o test.mjpeg</code></pre>
 <div class="sourceCode" id="cb6"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>request<span class="op">-&gt;</span>status<span class="op">()</span> <span class="op">==</span> Request<span class="op">::</span>RequestCancelled<span class="op">)</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span><span class="op">;</span></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="at">const</span> libcamera<span class="op">::</span>Request<span class="op">::</span>BufferMap <span class="op">&amp;</span>buffers <span class="op">=</span> request<span class="op">-&gt;</span>buffers<span class="op">();</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="kw">auto</span> bufferPair <span class="op">:</span> buffers<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    FrameBuffer <span class="op">*</span>buffer <span class="op">=</span> bufferPair<span class="op">.</span>second<span class="op">;</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> FrameMetadata <span class="op">&amp;</span>metadata <span class="op">=</span> buffer<span class="op">-&gt;</span>metadata<span class="op">();</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>cout<span class="op"> &lt;&lt;</span> <span class="st">&quot; seq: &quot;</span> <span class="op">&lt;&lt;</span> <span class="bu">std::</span>setw<span class="op">(</span><span class="dv">6</span><span class="op">)</span> <span class="op">&lt;&lt;</span> <span class="bu">std::</span>setfill<span class="op">(</span><span class="ch">&#39;0&#39;</span><span class="op">)</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>              <span class="op">&lt;&lt;</span> metadata<span class="op">.</span>sequence <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Queue next request with same buffer</span></span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>unique_ptr<span class="op">&lt;</span>Request<span class="op">&gt;</span> requestToQueue <span class="op">=</span> <span class="va">camera_</span><span class="op">-&gt;</span>createRequest<span class="op">();</span></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Stream <span class="op">*</span>stream <span class="op">=</span> bufferPair<span class="op">.</span>first<span class="op">;</span></span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    requestToQueue<span class="op">-&gt;</span>addBuffer<span class="op">(</span>stream<span class="op">,</span> buffer<span class="op">);</span></span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    <span class="va">camera_</span><span class="op">-&gt;</span>queueRequest<span class="op">(</span>requestToQueue<span class="op">.</span>get<span class="op">());</span></span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    <span class="va">requests_</span><span class="op">.</span>push_back<span class="op">(</span><span class="bu">std::</span>move<span class="op">(</span>requestToQueue<span class="op">));</span></span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>Save<span class="op">(</span>buffers<span class="op">);</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>unique_ptr<span class="op">&lt;</span>Request<span class="op">&gt;</span> requestToQueue <span class="op">=</span> <span class="va">camera_</span><span class="op">-&gt;</span>createRequest<span class="op">();</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="kw">auto</span> bufferPair <span class="op">:</span> buffers<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    FrameBuffer <span class="op">*</span>buffer <span class="op">=</span> bufferPair<span class="op">.</span>second<span class="op">;</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Stream <span class="op">*</span>stream <span class="op">=</span> bufferPair<span class="op">.</span>first<span class="op">;</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    requestToQueue<span class="op">-&gt;</span>addBuffer<span class="op">(</span>stream<span class="op">,</span> buffer<span class="op">);</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="va">camera_</span><span class="op">-&gt;</span>queueRequest<span class="op">(</span>requestToQueue<span class="op">.</span>get<span class="op">());</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="va">requests_</span><span class="op">.</span>push_back<span class="op">(</span><span class="bu">std::</span>move<span class="op">(</span>requestToQueue<span class="op">));</span></span></code></pre></div>
+</section>
+<section class="slide level2">
+
+<h3 id="save-yuv420-when-no-padding-in-data">Save YUV420 when no padding in data</h3>
+<div class="sourceCode" id="cb7"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ot">assert</span><span class="op">(</span><span class="va">configuration_</span><span class="op">-&gt;</span>at<span class="op">(</span><span class="dv">0</span><span class="op">).</span>size<span class="op">.</span>width <span class="op">==</span> <span class="va">configuration_</span><span class="op">-&gt;</span>at<span class="op">(</span><span class="dv">0</span><span class="op">).</span>stride<span class="op">);</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="dt">unsigned</span> <span class="dt">int</span> length <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="kw">auto</span> bufferPair <span class="op">:</span> buffers<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    FrameBuffer <span class="op">*</span>buffer <span class="op">=</span> bufferPair<span class="op">.</span>second<span class="op">;</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> FrameMetadata <span class="op">&amp;</span>metadata <span class="op">=</span> buffer<span class="op">-&gt;</span>metadata<span class="op">();</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>cout<span class="op"> &lt;&lt;</span> <span class="st">&quot; seq: &quot;</span> <span class="op">&lt;&lt;</span> <span class="bu">std::</span>setw<span class="op">(</span><span class="dv">6</span><span class="op">)</span> <span class="op">&lt;&lt;</span> <span class="bu">std::</span>setfill<span class="op">(</span><span class="ch">&#39;0&#39;</span><span class="op">)</span> <span class="op">&lt;&lt;</span> metadata<span class="op">.</span>sequence <span class="op">&lt;&lt;</span> <span class="bu">std::</span>endl<span class="op">;</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span><span class="dt">unsigned</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> buffer<span class="op">-&gt;</span>planes<span class="op">().</span>size<span class="op">();</span> i<span class="op">++)</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>        length <span class="op">+=</span> buffer<span class="op">-&gt;</span>planes<span class="op">()[</span>i<span class="op">].</span>length<span class="op">;</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="bu">std::</span>string<span class="op">&amp;</span> filename <span class="op">=</span> GetTimestamp<span class="op">()</span> <span class="op">+</span> <span class="st">&quot;.yuv&quot;</span><span class="op">;</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>ofstream<span class="op"> </span>out<span class="op">(</span>filename<span class="op">,</span> <span class="bu">std::</span>ios<span class="bu">::</span>out<span class="op"> |</span> <span class="bu">std::</span>ios<span class="bu">::</span>binary<span class="op">);</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> <span class="op">*</span>memory <span class="op">=</span> mmap<span class="op">(</span>NULL<span class="op">,</span> length<span class="op">,</span> PROT_READ <span class="op">|</span> PROT_WRITE<span class="op">,</span> MAP_SHARED<span class="op">,</span> buffer<span class="op">-&gt;</span>planes<span class="op">()[</span><span class="dv">0</span><span class="op">].</span>fd<span class="op">.</span>get<span class="op">(),</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    out<span class="op">.</span>write<span class="op">((</span><span class="dt">char</span> <span class="op">*)</span>memory<span class="op">,</span> length<span class="op">);</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    munmap<span class="op">(</span>memory<span class="op">,</span> length<span class="op">);</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>    out<span class="op">.</span>close<span class="op">();</span></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 </section>
 <section class="slide level2">
 
 <h3 id="encoding-image-and-video">Encoding image and video</h3>
 <ul>
 <li>libcamera provides raw image frames from the sensor that are processed using image processing and control algorithms based on per sensor tuning file</li>
-<li>libcamera does not provide any means to encode or display images or videos</li>
+<li>libcamera does not provide additional means to encode or display images or videos</li>
 <li><code>libcamera-still</code> uses external libraries to encode images such as libjpeg for jpeg</li>
 <li><code>libcamera-vid</code> uses hardware H.264 encoder on Raspberry Pi through <code>/dev/video11</code>, apps may use external libraries such as ffmpeg/libav codec for H.264</li>
 </ul>
@@ -300,9 +318,9 @@ libcamera-vid -t 10000 --codec mjpeg -o test.mjpeg</code></pre>
 <section class="slide level2">
 
 <h3 id="stop-camera">Stop camera</h3>
-<div class="sourceCode" id="cb7"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="va">camera_</span><span class="op">-&gt;</span>stop<span class="op">();</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="va">camera_</span><span class="op">-&gt;</span>requestCompleted<span class="op">.</span><span class="fu">disconnect</span><span class="op">(</span>requestComplete<span class="op">);</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="va">requests_</span><span class="op">.</span>clear<span class="op">();</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="va">camera_</span><span class="op">-&gt;</span>stop<span class="op">();</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="va">camera_</span><span class="op">-&gt;</span>requestCompleted<span class="op">.</span><span class="fu">disconnect</span><span class="op">(</span>requestComplete<span class="op">);</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="va">requests_</span><span class="op">.</span>clear<span class="op">();</span></span></code></pre></div>
 </section>
 <section class="slide level2">
 
@@ -311,29 +329,27 @@ libcamera-vid -t 10000 --codec mjpeg -o test.mjpeg</code></pre>
 <li>Configure streams, start and stop camera can repeat multiple times</li>
 <li>The application is now finished with the camera and the resources the camera uses</li>
 </ul>
-<div class="sourceCode" id="cb8"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>  Stream <span class="op">*</span>stream <span class="op">=</span> <span class="va">configuration_</span><span class="op">-&gt;</span>at<span class="op">(</span><span class="dv">0</span><span class="op">).</span>stream<span class="op">();</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="va">allocator_</span><span class="op">-&gt;</span>free<span class="op">(</span>stream<span class="op">);</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">delete</span> <span class="va">allocator_</span><span class="op">;</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="va">configuration_</span><span class="op">.</span>reset<span class="op">();</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="va">camera_</span><span class="op">-&gt;</span>release<span class="op">();</span></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="va">camera_manager_</span><span class="op">-&gt;</span>stop<span class="op">();</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>  Stream <span class="op">*</span>stream <span class="op">=</span> <span class="va">configuration_</span><span class="op">-&gt;</span>at<span class="op">(</span><span class="dv">0</span><span class="op">).</span>stream<span class="op">();</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="va">allocator_</span><span class="op">-&gt;</span>free<span class="op">(</span>stream<span class="op">);</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">delete</span> <span class="va">allocator_</span><span class="op">;</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="va">configuration_</span><span class="op">.</span>reset<span class="op">();</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="va">camera_</span><span class="op">-&gt;</span>release<span class="op">();</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="va">camera_manager_</span><span class="op">-&gt;</span>stop<span class="op">();</span></span></code></pre></div>
 </section>
 <section class="slide level2">
 
 <h3 id="build-and-run-example">Build and run example</h3>
-<pre class="log"><code>$ c++ example.cpp -o example `pkg-config --cflags --libs libcamera` -std=c++17
-
-$ LIBCAMERA_LOG_LEVELS=*:DEBUG ./example
-[4:00:09.926918692] [3203]  INFO Camera camera_manager.cpp:293 libcamera v0.0.0+3545-22656360-dirty (2022-05-12T10:01:53-03:00)
-[4:00:10.107994296] [3204]  WARN RPI raspberrypi.cpp:1241 Mismatch between Unicam and CamHelper for embedded data usage!
-[4:00:10.110650760] [3204]  INFO RPI raspberrypi.cpp:1356 Registered camera /base/soc/i2c0mux/i2c@1/imx219@10 to Unicam device /dev/media0 and ISP device /dev/media3
-[4:00:10.113007188] [3203]  INFO Camera camera.cpp:1029 configuring streams: (0) 640x480-YUV420
-[4:00:10.114227143] [3204]  INFO RPI raspberrypi.cpp:760 Sensor: /base/soc/i2c0mux/i2c@1/imx219@10 - Selected sensor format: 640x480-SBGGR10_1X10 - Selected unicam format: 640x480-pBAA
+<p>Invoke compiler directly</p>
+<pre class="log"><code>c++ example.cpp -o example `pkg-config --cflags --libs libcamera` -std=c++17</code></pre>
+<p>Use meson</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="ex">meson</span> build</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> build</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="ex">ninja</span></span></code></pre></div>
+<pre class="log"><code>$ LIBCAMERA_LOG_LEVELS=*:DEBUG ./example
 Press enter to exit...
- seq: 000007
- seq: 000008
- seq: 000009
- seq: 000010</code></pre>
+ seq: 000004
+ seq: 000005
+ seq: 000006</code></pre>
 </section>
 <section id="explore-further" class="slide level2">
 <h2>Explore further</h2>

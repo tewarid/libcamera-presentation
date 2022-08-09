@@ -1,6 +1,11 @@
-#include <libcamera/libcamera.h>
+#include <cassert>
+#include <chrono>
 #include <iomanip>
 #include <iostream>
+#include <fstream>
+#include <libcamera/libcamera.h>
+#include <sstream>
+#include <sys/mman.h>
 
 using namespace libcamera;
 
@@ -25,11 +30,44 @@ void ConfigureStreams()
     StreamRoles stream_roles = { StreamRole::VideoRecording };
     configuration_ = camera_->generateConfiguration(stream_roles);
     configuration_->at(0).pixelFormat = libcamera::formats::YUV420;
-    configuration_->at(0).bufferCount = 2;
+    configuration_->at(0).bufferCount = 6;
     configuration_->at(0).size.width = 640;
     configuration_->at(0).size.height = 480;
     configuration_->validate();
     camera_->configure(configuration_.get());
+}
+
+static std::string GetTimestamp()
+{
+    auto time = std::chrono::high_resolution_clock::now();
+    auto duration = time.time_since_epoch();
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration) % std::chrono::seconds{1};
+    std::stringstream s;
+    auto t = std::chrono::system_clock::to_time_t(time);
+    s << std::put_time(std::localtime(&t), "%FT%T");
+    s << "." << std::setw(3) << std::setfill('0') << ms.count();
+    return s.str();
+}
+
+static void Save(const libcamera::Request::BufferMap &buffers)
+{
+    assert(configuration_->at(0).size.width == configuration_->at(0).stride);
+    unsigned int length = 0;
+    for (auto bufferPair : buffers) {
+        FrameBuffer *buffer = bufferPair.second;
+        const FrameMetadata &metadata = buffer->metadata();
+        std::cout << " seq: " << std::setw(6) << std::setfill('0') << metadata.sequence << std::endl;
+        for (unsigned i = 0; i < buffer->planes().size(); i++)
+        {
+            length += buffer->planes()[i].length;
+        }
+        const std::string& filename = GetTimestamp() + ".yuv";
+        std::ofstream out(filename, std::ios::out | std::ios::binary);
+        void *memory = mmap(NULL, length, PROT_READ | PROT_WRITE, MAP_SHARED, buffer->planes()[0].fd.get(), 0);
+        out.write((char *)memory, length);
+        munmap(memory, length);
+        out.close();
+    }
 }
 
 static void requestComplete(Request *request)
@@ -37,17 +75,15 @@ static void requestComplete(Request *request)
     if (request->status() == Request::RequestCancelled)
         return;
     const libcamera::Request::BufferMap &buffers = request->buffers();
+    Save(buffers);
+    std::unique_ptr<Request> requestToQueue = camera_->createRequest();
     for (auto bufferPair : buffers) {
         FrameBuffer *buffer = bufferPair.second;
-        const FrameMetadata &metadata = buffer->metadata();
-        std::cout << " seq: " << std::setw(6) << std::setfill('0') << metadata.sequence << std::endl;
-        // Queue next request with same buffer
-        std::unique_ptr<Request> requestToQueue = camera_->createRequest();
         const Stream *stream = bufferPair.first;
         requestToQueue->addBuffer(stream, buffer);
-        camera_->queueRequest(requestToQueue.get());
-        requests_.push_back(std::move(requestToQueue));
     }
+    camera_->queueRequest(requestToQueue.get());
+    requests_.push_back(std::move(requestToQueue));
 }
 
 void StartCamera()
