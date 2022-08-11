@@ -114,11 +114,11 @@ libcamera-vid -t 10000 --codec mjpeg -o test.mjpeg
 Create instance of `libcamera::CameraManager` to acquire an instance of `libcamera::Camera`
 
 ```c++
-camera_manager_ = std::make_unique<CameraManager>();
-camera_manager_->start();
-std::string const &cam_id = camera_manager_->cameras()[0]->id();
-camera_ = camera_manager_->get(cam_id);
-camera_->acquire();
+  camera_manager_ = std::make_unique<CameraManager>();
+  camera_manager_->start();
+  std::string const &cam_id = camera_manager_->cameras()[0]->id();
+  camera_ = camera_manager_->get(cam_id);
+  camera_->acquire();
 ```
 
 ---
@@ -126,16 +126,16 @@ camera_->acquire();
 ### Configure streams
 
 ```c++
-StreamRoles stream_roles = { StreamRole::VideoRecording };
-// { StreamRole::StillCapture, StreamRole::Raw };
-// { StreamRole::Viewfinder };
-configuration_ = camera_->generateConfiguration(stream_roles);
-configuration_->at(0).pixelFormat = libcamera::formats::YUV420;
-configuration_->at(0).bufferCount = 2;
-configuration_->at(0).size.width = 640;
-configuration_->at(0).size.height = 480;
-configuration_->validate();
-camera_->configure(configuration_.get());
+  StreamRoles stream_roles = {StreamRole::VideoRecording};
+  // { StreamRole::StillCapture, StreamRole::Raw };
+  // { StreamRole::Viewfinder };
+  configuration_ = camera_->generateConfiguration(stream_roles);
+  configuration_->at(0).pixelFormat = libcamera::formats::YUV420;
+  configuration_->at(0).bufferCount = 6;
+  configuration_->at(0).size.width = 640;
+  configuration_->at(0).size.height = 480;
+  configuration_->validate();
+  camera_->configure(configuration_.get());
 ```
 
 ---
@@ -146,28 +146,28 @@ For each frame an application wants to capture it must queue a request for it to
 the camera
 
 ```c++
-Stream *stream = configuration_->at(0).stream();
-allocator_ = new FrameBufferAllocator(camera_);
-allocator_->allocate(stream);
-const std::vector<std::unique_ptr<FrameBuffer>> &buffers =
-    allocator_->buffers(stream);
+  Stream *stream = configuration_->at(0).stream();
+  allocator_ = new FrameBufferAllocator(camera_);
+  allocator_->allocate(stream);
+  const std::vector<std::unique_ptr<FrameBuffer>> &buffers =
+      allocator_->buffers(stream);
 ```
 
 ```c++
-controls_.set(controls::ExposureTime, 15000);
-controls_.set(controls::AnalogueGain, 2);
-camera_->start(&controls_);
-controls_.clear();
+  controls_.set(controls::ExposureTime, 15000);
+  controls_.set(controls::AnalogueGain, 2);
+  camera_->start(&controls_);
+  controls_.clear();
 ```
 
 ```c++
-camera_->requestCompleted.connect(requestComplete);
-for (unsigned int i = 0; i < buffers.size(); ++i) {
+  camera_->requestCompleted.connect(requestComplete);
+  for (unsigned int i = 0; i < buffers.size(); ++i) {
     std::unique_ptr<Request> request = camera_->createRequest();
     request->addBuffer(stream, buffers[i].get());
     camera_->queueRequest(request.get());
     requests_.push_back(std::move(request));
-}
+  }
 ```
 
 ---
@@ -175,21 +175,21 @@ for (unsigned int i = 0; i < buffers.size(); ++i) {
 ### `requestComplete`
 
 ```c++
-if (request->status() == Request::RequestCancelled)
+  if (request->status() == Request::RequestCancelled)
     return;
-const libcamera::Request::BufferMap &buffers = request->buffers();
-Save(buffers);
+  const libcamera::Request::BufferMap &buffers = request->buffers();
+  Save(buffers);
 ```
 
 ```c++
-std::unique_ptr<Request> requestToQueue = camera_->createRequest();
-for (auto bufferPair : buffers) {
+  std::unique_ptr<Request> requestToQueue = camera_->createRequest();
+  for (auto bufferPair : buffers) {
     FrameBuffer *buffer = bufferPair.second;
     const Stream *stream = bufferPair.first;
     requestToQueue->addBuffer(stream, buffer);
-}
-camera_->queueRequest(requestToQueue.get());
-requests_.push_back(std::move(requestToQueue));
+  }
+  camera_->queueRequest(requestToQueue.get());
+  requests_.push_back(std::move(requestToQueue));
 ```
 
 ---
@@ -197,29 +197,26 @@ requests_.push_back(std::move(requestToQueue));
 ### Save YUV420 when no padding in data
 
 ```c++
-assert(configuration_->at(0).size.width == configuration_->at(0).stride);
+  assert(configuration_->at(0).size.width == configuration_->at(0).stride);
 ```
 
 ```c++
-unsigned int length = 0;
-for (auto bufferPair : buffers) {
+  unsigned int length = 0;
+  for (auto bufferPair : buffers) {
     FrameBuffer *buffer = bufferPair.second;
     const FrameMetadata &metadata = buffer->metadata();
-    std::cout << " seq: " << std::setw(6) << std::setfill('0') << metadata.sequence << std::endl;
-```
-
-```c++
-    for (unsigned i = 0; i < buffer->planes().size(); i++)
-    {
-        length += buffer->planes()[i].length;
+    std::cout << " seq: " << std::setw(6) << std::setfill('0')
+              << metadata.sequence << std::endl;
+    for (unsigned i = 0; i < buffer->planes().size(); i++) {
+      length += buffer->planes()[i].length;
     }
 ```
 
 ```c++
-    const std::string& filename = GetTimestamp() + ".yuv";
+    const std::string &filename = GetTimestamp() + ".yuv";
     std::ofstream out(filename, std::ios::out | std::ios::binary);
     void *memory = mmap(NULL, length, PROT_READ | PROT_WRITE, MAP_SHARED,
-        buffer->planes()[0].fd.get(), 0);
+                        buffer->planes()[0].fd.get(), 0);
     out.write((char *)memory, length);
     munmap(memory, length);
     out.close();
@@ -240,9 +237,9 @@ for (auto bufferPair : buffers) {
 ### Stop camera
 
 ```c++
-camera_->stop();
-camera_->requestCompleted.disconnect(requestComplete);
-requests_.clear();
+  camera_->stop();
+  camera_->requestCompleted.disconnect(requestComplete);
+  requests_.clear();
 ```
 
 ---
