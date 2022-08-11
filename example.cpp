@@ -63,7 +63,8 @@ static void Save(const libcamera::Request::BufferMap &buffers)
         }
         const std::string& filename = GetTimestamp() + ".yuv";
         std::ofstream out(filename, std::ios::out | std::ios::binary);
-        void *memory = mmap(NULL, length, PROT_READ | PROT_WRITE, MAP_SHARED, buffer->planes()[0].fd.get(), 0);
+        void *memory = mmap(NULL, length, PROT_READ | PROT_WRITE, MAP_SHARED,
+            buffer->planes()[0].fd.get(), 0);
         out.write((char *)memory, length);
         munmap(memory, length);
         out.close();

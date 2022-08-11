@@ -151,10 +151,16 @@ allocator_ = new FrameBufferAllocator(camera_);
 allocator_->allocate(stream);
 const std::vector<std::unique_ptr<FrameBuffer>> &buffers =
     allocator_->buffers(stream);
+```
+
+```c++
 controls_.set(controls::ExposureTime, 15000);
 controls_.set(controls::AnalogueGain, 2);
 camera_->start(&controls_);
 controls_.clear();
+```
+
+```c++
 camera_->requestCompleted.connect(requestComplete);
 for (unsigned int i = 0; i < buffers.size(); ++i) {
     std::unique_ptr<Request> request = camera_->createRequest();
@@ -173,6 +179,9 @@ if (request->status() == Request::RequestCancelled)
     return;
 const libcamera::Request::BufferMap &buffers = request->buffers();
 Save(buffers);
+```
+
+```c++
 std::unique_ptr<Request> requestToQueue = camera_->createRequest();
 for (auto bufferPair : buffers) {
     FrameBuffer *buffer = bufferPair.second;
@@ -189,18 +198,28 @@ requests_.push_back(std::move(requestToQueue));
 
 ```c++
 assert(configuration_->at(0).size.width == configuration_->at(0).stride);
+```
+
+```c++
 unsigned int length = 0;
 for (auto bufferPair : buffers) {
     FrameBuffer *buffer = bufferPair.second;
     const FrameMetadata &metadata = buffer->metadata();
     std::cout << " seq: " << std::setw(6) << std::setfill('0') << metadata.sequence << std::endl;
+```
+
+```c++
     for (unsigned i = 0; i < buffer->planes().size(); i++)
     {
         length += buffer->planes()[i].length;
     }
+```
+
+```c++
     const std::string& filename = GetTimestamp() + ".yuv";
     std::ofstream out(filename, std::ios::out | std::ios::binary);
-    void *memory = mmap(NULL, length, PROT_READ | PROT_WRITE, MAP_SHARED, buffer->planes()[0].fd.get(), 0);
+    void *memory = mmap(NULL, length, PROT_READ | PROT_WRITE, MAP_SHARED,
+        buffer->planes()[0].fd.get(), 0);
     out.write((char *)memory, length);
     munmap(memory, length);
     out.close();
@@ -247,13 +266,9 @@ uses
 
 ### Build and run example
 
-Invoke compiler directly
-
 ```log
 c++ example.cpp -o example `pkg-config --cflags --libs libcamera` -std=c++17
 ```
-
-Use meson
 
 ```bash
 meson build
