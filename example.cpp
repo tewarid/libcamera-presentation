@@ -19,6 +19,8 @@ ControlList controls_;
 void OpenCamera() {
   camera_manager_ = std::make_unique<CameraManager>();
   camera_manager_->start();
+  if (camera_manager_->cameras().size() == 0)
+    throw std::runtime_error("no cameras available");
   std::string const &cam_id = camera_manager_->cameras()[0]->id();
   camera_ = camera_manager_->get(cam_id);
   camera_->acquire();
