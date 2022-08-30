@@ -3,5 +3,5 @@ title: libcamera
 author:
 - Devendra Tewari
 theme: white
-date: August 11, 2022
+date: August 30, 2022
 ---

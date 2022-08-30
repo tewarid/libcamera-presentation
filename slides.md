@@ -14,6 +14,7 @@ sensors
 - Intelligent agriculture and farming
 - Medical and life sciences
 - Smart Retail
+- Smart Cities
 
 ---
 
@@ -68,6 +69,7 @@ Raw Y'UV images can be viewed with an app such as [yuview](https://github.com/IE
 - Automatic Exposure Control (AEC)
 - Automatic Gain Control (AGC)
 - Automatic Lens Shading Correction (ALSC)
+- Green Equalization (GEQ)
 
 ## Camera Modules from `Raspberry Pi`
 
@@ -285,6 +287,7 @@ Press enter to exit...
 
 - [libcamera: The Future of Cameras on Linux is Now](https://www.youtube.com/watch?v=VNfq4L7mRtU)
 - [libcamera Documentation](https://libcamera.org/docs.html)
+- [Beginner’s Guide on Choosing the Right Camera Modules](https://www.arducam.com/choose-camera-modules-raspberry-pi-jetson-nano-guide/)
 - [libcamera API](https://libcamera.org/api-html)
 - [Raspberry Pi Camera Guide](Camera)
 - [Raspberry Pi Camera Algorithm and Tuning Guide](https://datasheets.raspberrypi.com/camera/raspberry-pi-camera-guide.pdf)
