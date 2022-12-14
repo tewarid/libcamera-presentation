@@ -265,9 +265,14 @@ uses
 
 ### Build and run example
 
+Install dependencies on Raspberry Pi OS and build
+
 ```log
+sudo apt install -y libcamera-dev meson
 c++ example.cpp -o example `pkg-config --cflags --libs libcamera` -std=c++17
 ```
+
+Build using meson
 
 ```bash
 meson build
