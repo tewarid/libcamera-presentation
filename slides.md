@@ -294,5 +294,5 @@ Press enter to exit...
 - [libcamera Documentation](https://libcamera.org/docs.html)
 - [Beginner’s Guide on Choosing the Right Camera Modules](https://www.arducam.com/choose-camera-modules-raspberry-pi-jetson-nano-guide/)
 - [libcamera API](https://libcamera.org/api-html)
-- [Raspberry Pi Camera Guide](Camera)
+- [Raspberry Pi Camera Guide](https://www.raspberrypi.com/documentation/computers/camera_software.html)
 - [Raspberry Pi Camera Algorithm and Tuning Guide](https://datasheets.raspberrypi.com/camera/raspberry-pi-camera-guide.pdf)
